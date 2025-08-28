@@ -1,34 +1,33 @@
+let firstRun = true; //image preload
 
-
-
-// vocal, drum, bass, and other are volumes ranging from 0 to 100
+//animated face paramaters
+let faceFrames = [];       //setting up animation using array of images
+let faceImageAmount = 24; //total images in array
+let currentImage = 0; // current image in foreloop
 
 function draw_one_frame(words, vocal, drum, bass, other, counter) {
-   colorMode(HSB,360,100,100);
-  let bg = map(bass,0,100,0,255); //maps the h value in hsb colour mode for the background colour 
-   
-  if (frameCount % 50==0){ //allows for the trail effect that nobackground provides but it adds in a background every 50 frames to not make it a big mess
-  background(bg,100,100);
-   }
-  
+  background(0);
 
-  let yMove= map(bass,0,100,200,height) ;// maps the bass to the y position of the rectangle
- 
+  loadFaceImages();
 
+ if (counter>0){ //making it so that the animation only happens when the song is playing
 
-  let h= map(drum,0,100,245,360);// maps the drum value to H value in HSB colour mode for the fill
+    image(faceFrames[currentImage], 0, 0, width, height); ///imaging the animation by imaging the current image from the array
 
-  let gridsX= map(vocal,0,100,1,20); //maps the vocal to the amount of rectangles used in the for loop 
-
-  for (let x = 0; x < gridsX; x ++){
-   let rectY= yMove;
-  
-   let rectW= (width/gridsX) * x;
-  
-   fill(h,100,100);
-   rect(rectW,rectY,50,50);
-
+    if (frameCount % 5 === 0) { //setting the framerate of the animation to 12Fps to get that stop motion look, while keeping the total sketch framerate at 60fps
+    currentImage = (currentImage + 1) % faceImageAmount; // tells the loop to go to the next image
   }
+}
+}
 
 
+function loadFaceImages() {
+  //function to load images, so that the draw one frame function is cleaner
+
+  if (firstRun) { //image preload
+    for (let x = 1; x <= faceImageAmount; x++) {   //for loop so that I don't have to call away 24+ images individually, starting at 1 instead of 0 since it is being used to call the name of the image which starts at 1.png
+      faceFrames.push(loadImage("face/" + x + ".png"));  //loading images from folder named face to keep side bar clean with so many images
+    }
+    firstRun = false;
+  }
 }

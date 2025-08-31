@@ -7,11 +7,9 @@ let faceImageAmount = 24; //total images in array
 let currentImage = 0; // current image in foreloop
 let img;
 
-
 //moire
-let lineAmountX= 200;
+let lineAmountX= 200; //amount of lines
 let lineAmountY= 200;
-
 
 // let lineSpace = 15; //20 for body, 40 for inro
 let textureNoiseCounter = 2;
@@ -25,95 +23,205 @@ let waveScale = 200;
 let wavesOffamount =40;
 //400,40
 
-//rasterisation variables
+// moire layer controls
+let wavesShape = "line"; //setting it up for the option to add rectangles or ellipses etc
+let moireLayers = 1;     // how many layers of moire, to give different variations during song
+let moireVisible = true; // a paramater to turn on and off the moire layers to get pauses that match drum pauses in the song etc.
+
+let blueMoireLayerCenter; // a paramater to make sure the blue layer is always on screen
+
+//rasterisation variables , not sure if I will use but keeping for now
 let gridsX = 20;
 let gridsY =gridsX;
 
 let pink, blue, pg;
 
 function draw_one_frame(words, vocal, drum, bass, other, counter) {
-  background(70,122,255);
-angleMode(DEGREES);
+  background(0,0,255);
+  angleMode(DEGREES);
 
-  if (counter > 0) { //making it so that the animation only happens when the song is playing
+  let seconds = counter/60;
 
+  // if statements that control whether a moire layer is visible, what shape it is and how many moire layers
+  //based on seconds which is controlled by the counter variable/60
 
+  if (seconds < 87) { //intro
+    wavesShape = "line";
+    moireLayers = 1;
+    moireVisible = true;
+  }
+  if (seconds >= 87 && seconds < 88) { //pause before first body
+    moireVisible = false;
+  }
+  if (seconds >= 88 && seconds < 109.5) { // First 16 bars of body
+    wavesShape = "line";
+    moireLayers = 1;
+    moireVisible = true;
+  }
+  if (seconds >= 109.5 && seconds < 110) { //brief pause before the second 16
+    moireVisible = false;
+  }
+  if (seconds >= 110 && seconds < 132) { //second 16
+    wavesShape = "line";
+    moireLayers = 2;
+    moireVisible = true;
+  }
+  if (seconds >= 132 && seconds < 135) { //pause bofore 3rd 16
+    moireVisible = false;
+  }
+  if (seconds >= 135 && seconds < 154) { //3rd 16
+    wavesShape = "line";   
+    moireLayers = 1;
+    moireVisible = true;
+  }
+  if (seconds >= 154 && seconds < 155.5) { //puase before 4th 16
+    wavesShape = "line";   
+    moireLayers = 1;
+    moireVisible = true;
+  }
+  if (seconds >= 155.5 && seconds < 157) { //4th 16
+    moireVisible = false;
+  }
+  if (seconds >= 157) { //rest of song-needs to be updated and worked on as I go
+    wavesShape = "line";   
+    moireLayers = 2;
+    moireVisible = true;
+  }
 
-    let pink = color(255, 25, 104);
-    let blue= color(0,0,255);
-    let grey= color(120);
-
-
-    
-let seconds = counter/60;
-
-    faceLayer();
-    
- if (seconds > 21.26) {
+  // For blue moire layers
   
-   noFill();
-   noStroke();
-   rect(0,0,width,height);
-    }
+ 
+    blueMoireLayerCenter = (counter * 0.1) % 360;  // I was having issues with the blue layer rotating off screen since it was tied to counter and it kept going. I added a modulo so that it never goes out of 360 degrees
+ 
+ 
+    if (counter > 0) { //making it so that the animation only happens when the song is playing
 
-    else {
-      fill(0,122,255);
-      rect(0,0,width,height);
+    let pink = color(255, 25, 104); //colours used
+    let blue = color(0,0,255);
+    let grey = color(120);
 
-    }
-    
-    blendMode(BURN);
+    let seconds = counter/60; //variable to make it easier to track time
+
    
-let vocalBlend= map(vocal,40,60,0,1);
-   let faceColour = lerpColor(grey,blue,vocalBlend);
+   //face layer
+   
+   if( seconds >21.26){ //testing out the time based approach of bringing in face layer only when vocals play
+   faceLayer(); //
+   }
 
-  // let bassMoireBlend = map(bass,0,60,0,1);
-  // let moire1Colour = lerpColor(blue,pink,bassMoireBlend);
+    blendMode(BURN); // this sets the overlay below to blend with the face layer in a high contrast way
 
-    fill(faceColour,100);
+    let vocalBlend= map(vocal,40,60,0,1); //mapping the vocal values to the blend value of the faceColour lerpColor below
+    let faceColour = lerpColor(grey,blue,vocalBlend); //lerpColour to create glitchy desaturated effect
+
+   //colour overlay to get that glitchy desaturated effect
+    fill(faceColour,100); 
     noStroke();
     rect(0, 0, width, height);
-  
+
+    blendMode(BLEND); //this resets the blendMode back to normal so it doesn't effect other layers
+
    
-    blendMode(BLEND);
-    
-    
-    
-    
-    
-    
    
-push();
-// rotate(counter*0.1);
-Moire(seconds,pink);
-pop();
+    // if statements to draw the moires 
+    if (moireVisible) { //if statement for ability to have pauses and continuity
+     
+      if (moireLayers === 1) { // if statement for what is visible 1 moire layer, just the pink layer
+        push();
+        
+        Moire(seconds, pink, 'pink'); 
+       
+        pop();
+      } 
+      
+      else if (moireLayers === 2) { //if statement for what is visible for two moire layers
+       
+        push(); //pink layer
+        Moire(seconds, pink, 'pink');
+        pop();
+       
+        push(); //blue layer
+       
+        translate(width/2, height/2); //putting the blue layer more centered
+       
+        rotate(counter * 0.1);// speed of rotation of blue layer is mapped to counter
+        Moire(seconds, blue, 'blue', true); // tells Moire not to translate again
+       
+        pop();
 
-if (seconds >110){
-push();
-rotate(counter*0.1);
-Moire(seconds,blue);
-pop();
-}
-let tilesX= 1920/8; //setting the ledscreen dots
-let tilesY=1080/8;
-let tileW = width / tilesX;
-let tileH = height / tilesY;
-
- for (let x = 0; x < tilesX; x++) {
-   for (let y = 0; y < tilesY; y++) {
-   fill(40,90); //reducing the opacity a little bit to retain the face better and make it look like it is on a screen
+       
+      }
+    } 
     
-   ellipse(x * tileW, y * tileH, tileW, tileH);
-   }
- }
- 
-// push();
-// stroke(pink);
-// rotate(20);
-// Moire();
-// pop();
+    else { // when moire is not visible, this calls away the moire modulators to keep going, so that the animation remains continous but invisible and matches the song. This way it doesn't stop and then start again its just invisible, leading to no timing issues
+     
+      MoireModulators(); //calls away the function that has the parameters that modulate the waves for the moire function
+     
+      if (moireLayers === 2) { //if 2 layers image the mire modulators twice
+        MoireModulators();
+        MoireModulators();
+      } 
+      
+      else { //if moire layers =1 just image the moireModulators once
+        MoireModulators();
+      }
+    }
 
+
+    //led screen effect overlay
+    let tilesX= 1920/8; //setting the ledscreen dots based on my sketch size
+    let tilesY=1080/8;
+    let tileW = width / tilesX; //setting up the amount of ellipses in the for loop
+    let tileH = height / tilesY;
+
+    for (let x = 0; x < tilesX; x++) { 
+      for (let y = 0; y < tilesY; y++) {
+        fill(40,90); //reducing the opacity a little bit to retain the face better and make it look like it is on a screen
+        ellipse(x * tileW, y * tileH, tileW, tileH);
+      }
+    }
   }
+}
+
+function Moire(seconds, moireColour, layerSelect, noTranslate) {
+
+  pink = color(237, 25, 104); 
+  blue = color(0, 0, 255);
+ 
+  let lineSpace = map(seconds,0,88,100,15); // mapped the line space paramamter of the moire generator to decrease of the intro, matching the build up feeling as it gets closer to the body
+  lineSpace = max(lineSpace,15); //setting a minimum linespace value so that it retains clarity and performance
+  
+  push();
+
+  if (!noTranslate) { // if statment that keeps the moire layers on screen at all times, if I want a layer to be translated this is called, else its not.  double negative statement but it works.
+    translate(width/2, height/2);
+  }
+
+
+  //moire controls
+  scale(4); //making it so the moire fills the whole sketch
+  rotate(angleCounter); // sets the angle that the moire patterns are being generated at
+   MoireModulators(); //moire Modulator
+
+  let maxRadius = 380;// padding margin to make sure the pattern is always fully covering the screen
+
+  
+  ///creating a grid of modulated lines (or rectangles) for the pattern that also always cover the whole sketch
+  for (let x = -maxRadius; x < maxRadius; x += lineSpace / 2) {
+    for (let y = -maxRadius; y < maxRadius; y += lineSpace) {
+      waves(x, y, moireColour, layerSelect);
+    }
+  }
+
+  pop();
+}
+
+function MoireModulators() { 
+  //putting these paramaters into their own function so they can easily be repeated and used in different spots of the code
+  
+  angleCounter += 0.003; //rotation angle of generated pattern
+  textureNoiseCounter += 0.01; // how much noise is added 
+  strokeWeightNoiseCounter += 0.03; // how much noise is added
 }
 
 function loadFaceImages() {
@@ -129,95 +237,29 @@ function loadFaceImages() {
   firstRun = false;
 }
 
-
-
 function faceLayer(vocal,counter) {
-  
   if (firstRun) { // a way to make the animation use less processing power by only loading the images once instead of every loop
     loadFaceImages(); //calling away the load image function
     if (faceFrames.length < faceImageAmount) return; // makes it so that the code won't run untill all images are loaded by checking how many have been loaded against the total frames
   }
 
-  
-    if (faceFrames.length > 0) { //if the faceFrames array is loaded , image the current frame
-      image(faceFrames[currentImage], 0, 0, width, height); ///imaging the animation by imaging the current image from the array
-    }
-
-    // if (pinkfaceFrames.length > 0) { //if the faceFrames array is loaded , image the current frame
-    //   image(pinkfaceFrames[currentImage], 0, 0, width, height); ///imaging the animation by imaging the current image from the array
-    // }
-
-    if (frameCount % 3 === 0) { //setting the framerate of the animation to 12Fps to get that stop motion look, while keeping the total sketch framerate at 60fps
-      currentImage = (currentImage + 1) % faceImageAmount; // tells the loop to go to the next image
-    }
-
-   //adding a led screen like effect so it matches rest of animation layers that will be created in p5
-   //doing it in a more processor friendly way of just overlaying a grid of ellipses on top of the animation
-   
-  // let tilesX= 1920/8; //setting the ledscreen dots
-  //  let tilesY=1080/8;
-  //  let tileW = width / tilesX;
-  //  let tileH = height / tilesY;
-
-  //   for (let x = 0; x < tilesX; x++) {
-  //     for (let y = 0; y < tilesY; y++) {
-  //     fill(40,90); //reducing the opacity a little bit to retain the face better and make it look like it is on a screen
-       
-  //     ellipse(x * tileW, y * tileH, tileW, tileH);
-  //     }
-  //   }
-  }
-  
-
-
-
-// noise generator
-//   let tileW = width / tilesX;
-//   let tileH = height / tilesY;
-
-//   for (let x = 0; x < tilesX; x++) {
-//     for (let y = 0; y < tilesY; y++) {
-//       fill(random(0,40),60);
-//       noStroke();
-//       rect(x * tileW, y * tileH, tileW, tileH);
-//     }
-// //   }
-
-// }
-// }
-
-
-
-function Moire(seconds,moireColour) {
-  //background pattern as pGraphics so it can be rasterised later
-  pink = color(237, 25, 104); ///intro alpha at 90?
-  blue = color(0, 0, 255);
-  let lineSpace = map(seconds,0,88,100,15);
-  lineSpace = max (lineSpace,15);
-  push();
-  // background(pink);
-  stroke(moireColour);
-  translate(width *2/3, height / 2);
-  scale(4);
-  rotate(angleCounter);
-
-  //noise modulators to create moire patterns
-  angleCounter += 0.003;
-  textureNoiseCounter += 0.01;
-  strokeWeightNoiseCounter += 0.03;
-
-  ///creating a grid of modulated lines
-  for (let x = -width / 2; x < lineAmountX; x += lineSpace / 2) {
-    for (let y = -height / 2; y < lineAmountY; y += lineSpace) {
-      waves(x, y);
-    }
+  if (faceFrames.length > 0) { //if the faceFrames array is loaded , image the current frame
+    image(faceFrames[currentImage], 0,  0, width, height); ///imaging the animation by imaging the current image from the array
   }
 
-  pop();
+  // if (pinkfaceFrames.length > 0) { //if the faceFrames array is loaded , image the current frame
+  //   image(pinkfaceFrames[currentImage], 0, 0, width, height); ///imaging the animation by imaging the current image from the array
+  // }
+
+  if (frameCount % 3 === 0) { //setting the framerate of the animation to 12Fps to get that stop motion look, while keeping the total sketch framerate at 60fps
+    currentImage = (currentImage + 1) % faceImageAmount; // tells the loop to go to the next image
+  }
+
 }
 
-function waves(x, y) {
-//function that modulates the lines in the moire function so that moire is cleaner
+
+function waves(x, y, moireColour, layerSelect) {
+  //function that modulates the lines in the moire function so that moire is cleaner
   //using noise to modulate a line
 
   let noiseX = textureNoiseCounter + x / waveScale;
@@ -229,9 +271,13 @@ function waves(x, y) {
   strokeWeight(1);
   if (field < offset) offset = field;
 
+  // Only drawing lines, ignore any rectangles
+  stroke(moireColour);
+  noFill();
   line(x + offset, y + offset, x + offset * 2, y + offset * 2);
-}
 
+ 
+}
 
 // function rasterisation() {
 //   let pixelW = width / gridsX;
@@ -259,4 +305,19 @@ function waves(x, y) {
 //       pop();
 //     }
 //   }
+// }
+
+// noise generator
+//   let tileW = width / tilesX;
+//   let tileH = height / tilesY;
+
+//   for (let x = 0; x < tilesX; x++) {
+//     for (let y = 0; y < tilesY; y++) {
+//       fill(random(0,40),60);
+//       noStroke();
+//       rect(x * tileW, y * tileH, tileW, tileH);
+//     }
+// //   }
+
+// }
 // }

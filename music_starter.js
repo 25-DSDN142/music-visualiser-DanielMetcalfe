@@ -45,6 +45,7 @@ function draw_one_frame(words, vocal, drum, bass, other, counter) {
   // if statements that control whether a moire layer is visible, what shape it is and how many moire layers
   //based on seconds which is controlled by the counter variable/60
 
+  //lines
   if (seconds < 87) { //intro
     wavesShape = "line";
     moireLayers = 1;
@@ -69,13 +70,15 @@ function draw_one_frame(words, vocal, drum, bass, other, counter) {
   if (seconds >= 132 && seconds < 135) { //pause bofore 3rd 16
     moireVisible = false;
   }
+  
+  //rectangles
   if (seconds >= 135 && seconds < 154) { //3rd 16
-    wavesShape = "line";   
+    wavesShape = "rect";
     moireLayers = 1;
     moireVisible = true;
   }
   if (seconds >= 154 && seconds < 155.5) { //puase before 4th 16
-    wavesShape = "line";   
+    wavesShape = "rect";   
     moireLayers = 1;
     moireVisible = true;
   }
@@ -83,18 +86,15 @@ function draw_one_frame(words, vocal, drum, bass, other, counter) {
     moireVisible = false;
   }
   if (seconds >= 157) { //rest of song-needs to be updated and worked on as I go
-    wavesShape = "line";   
+    wavesShape = "rect";   
     moireLayers = 2;
     moireVisible = true;
   }
 
   // For blue moire layers
-  
- 
-    blueMoireLayerCenter = (counter * 0.1) % 360;  // I was having issues with the blue layer rotating off screen since it was tied to counter and it kept going. I added a modulo so that it never goes out of 360 degrees
- 
- 
-    if (counter > 0) { //making it so that the animation only happens when the song is playing
+  blueMoireLayerCenter = (counter * 0.1) % 360;  // I was having issues with the blue layer rotating off screen since it was tied to counter and it kept going. I added a modulo so that it never goes out of 360 degrees
+
+  if (counter > 0) { //making it so that the animation only happens when the song is playing
 
     let pink = color(255, 25, 104); //colours used
     let blue = color(0,0,255);
@@ -102,71 +102,52 @@ function draw_one_frame(words, vocal, drum, bass, other, counter) {
 
     let seconds = counter/60; //variable to make it easier to track time
 
-   
-   //face layer
-   
-   if( seconds >21.26){ //testing out the time based approach of bringing in face layer only when vocals play
-   faceLayer(); //
-   }
+    //face layer
+    if( seconds >21.26){ //testing out the time based approach of bringing in face layer only when vocals play
+      faceLayer(); //
+    }
 
     blendMode(BURN); // this sets the overlay below to blend with the face layer in a high contrast way
 
     let vocalBlend= map(vocal,40,60,0,1); //mapping the vocal values to the blend value of the faceColour lerpColor below
     let faceColour = lerpColor(grey,blue,vocalBlend); //lerpColour to create glitchy desaturated effect
 
-   //colour overlay to get that glitchy desaturated effect
+    //colour overlay to get that glitchy desaturated effect
     fill(faceColour,100); 
     noStroke();
     rect(0, 0, width, height);
 
     blendMode(BLEND); //this resets the blendMode back to normal so it doesn't effect other layers
 
-   
-   
     // if statements to draw the moires 
     if (moireVisible) { //if statement for ability to have pauses and continuity
-     
       if (moireLayers === 1) { // if statement for what is visible 1 moire layer, just the pink layer
         push();
-        
         Moire(seconds, pink, 'pink'); 
-       
         pop();
       } 
-      
       else if (moireLayers === 2) { //if statement for what is visible for two moire layers
-       
         push(); //pink layer
         Moire(seconds, pink, 'pink');
         pop();
        
         push(); //blue layer
-       
         translate(width/2, height/2); //putting the blue layer more centered
-       
         rotate(counter * 0.1);// speed of rotation of blue layer is mapped to counter
         Moire(seconds, blue, 'blue', true); // tells Moire not to translate again
-       
         pop();
-
-       
       }
     } 
-    
     else { // when moire is not visible, this calls away the moire modulators to keep going, so that the animation remains continous but invisible and matches the song. This way it doesn't stop and then start again its just invisible, leading to no timing issues
-     
       MoireModulators(); //calls away the function that has the parameters that modulate the waves for the moire function
-     
       if (moireLayers === 2) { //if 2 layers image the mire modulators twice
         MoireModulators();
         MoireModulators();
       } 
-      
       else { //if moire layers =1 just image the moireModulators once
         MoireModulators();
       }
     }
-
 
     //led screen effect overlay
     let tilesX= 1920/8; //setting the ledscreen dots based on my sketch size
@@ -184,28 +165,25 @@ function draw_one_frame(words, vocal, drum, bass, other, counter) {
 }
 
 function Moire(seconds, moireColour, layerSelect, noTranslate) {
-
   pink = color(237, 25, 104); 
   blue = color(0, 0, 255);
- 
+
   let lineSpace = map(seconds,0,88,100,15); // mapped the line space paramamter of the moire generator to decrease of the intro, matching the build up feeling as it gets closer to the body
   lineSpace = max(lineSpace,15); //setting a minimum linespace value so that it retains clarity and performance
-  
+
   push();
 
   if (!noTranslate) { // if statment that keeps the moire layers on screen at all times, if I want a layer to be translated this is called, else its not.  double negative statement but it works.
     translate(width/2, height/2);
   }
 
-
   //moire controls
   scale(4); //making it so the moire fills the whole sketch
   rotate(angleCounter); // sets the angle that the moire patterns are being generated at
-   MoireModulators(); //moire Modulator
+  MoireModulators(); //moire Modulator
 
   let maxRadius = 380;// padding margin to make sure the pattern is always fully covering the screen
 
-  
   ///creating a grid of modulated lines (or rectangles) for the pattern that also always cover the whole sketch
   for (let x = -maxRadius; x < maxRadius; x += lineSpace / 2) {
     for (let y = -maxRadius; y < maxRadius; y += lineSpace) {
@@ -218,7 +196,7 @@ function Moire(seconds, moireColour, layerSelect, noTranslate) {
 
 function MoireModulators() { 
   //putting these paramaters into their own function so they can easily be repeated and used in different spots of the code
-  
+
   angleCounter += 0.003; //rotation angle of generated pattern
   textureNoiseCounter += 0.01; // how much noise is added 
   strokeWeightNoiseCounter += 0.03; // how much noise is added
@@ -254,9 +232,7 @@ function faceLayer(vocal,counter) {
   if (frameCount % 3 === 0) { //setting the framerate of the animation to 12Fps to get that stop motion look, while keeping the total sketch framerate at 60fps
     currentImage = (currentImage + 1) % faceImageAmount; // tells the loop to go to the next image
   }
-
 }
-
 
 function waves(x, y, moireColour, layerSelect) {
   //function that modulates the lines in the moire function so that moire is cleaner
@@ -271,12 +247,26 @@ function waves(x, y, moireColour, layerSelect) {
   strokeWeight(1);
   if (field < offset) offset = field;
 
-  // Only drawing lines, ignore any rectangles
-  stroke(moireColour);
-  noFill();
-  line(x + offset, y + offset, x + offset * 2, y + offset * 2);
-
- 
+  // Draw lines or rectangles based on wavesShape
+  if (wavesShape === "line") {
+    // Only drawing lines
+    stroke(moireColour);
+    noFill();
+    line(x + offset, y + offset, x + offset * 2, y + offset * 2);
+  } else if (wavesShape === "rect") {
+    // Drawing rectangles for moire
+    stroke(0);
+    if (layerSelect === "blue") {
+      fill(0,0,255);
+    } else {
+      fill(255,25,104);
+    }
+    let w = offset * 2;
+    let h = offset * 2;
+    
+    rectMode(CENTER);
+    rect(x + offset, y + offset, w, h);
+  }
 }
 
 // function rasterisation() {
@@ -318,6 +308,5 @@ function waves(x, y, moireColour, layerSelect) {
 //       rect(x * tileW, y * tileH, tileW, tileH);
 //     }
 // //   }
-
-// }
-// }
+// // }
+// // }

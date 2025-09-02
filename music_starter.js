@@ -1,13 +1,21 @@
 let firstRun = true; //image preload
-
-let bgimg;
-
+let bgimg; //bg img
 //animated face paramaters
 let faceFrames = {}; // object to lazily hold loaded images by frame number (not a packed array)
 let faceImageAmount = 1280; //total images in array
 let currentImage = 0; // current image in foreloop
 let img;
+// buffer config
+let introVocal1FrameBeg = 259;
+let introVocal1FrameEnd = 698;
+let introVocal1Start = 21.36;
 
+let introVocal1End = 46.26;
+let introVocal1TotalFrames = introVocal1FrameEnd - introVocal1FrameBeg + 1;
+let ImageLoadAmount = 10;
+
+
+//moire parameters
 let lineAmountX= 200; //amount of lines
 let lineAmountY= 200;
 // let lineSpace = 15; //20 for body, 40 for inro
@@ -33,64 +41,63 @@ let gridsY=gridsX;
 
 let pink, blue, pg;
 
-// buffer config
-let FACE_CLIP_START = 259;
-let FACE_CLIP_END = 698;
-let FACE_CLIP_FPS = 12;
-let FACE_CLIP_SECONDS_START = 21.36;
-let FACE_CLIP_SECONDS_END = 46.26;
-let FACE_CLIP_LEN = FACE_CLIP_END - FACE_CLIP_START + 1;
-let FACE_BUFFER_AHEAD = 10;
 
-function drawFaceClipSynced(seconds) {
-  let framePeriod = 1.0 / FACE_CLIP_FPS;
-  let clipElapsed = seconds - FACE_CLIP_SECONDS_START;
-  if (clipElapsed < 0) clipElapsed = 0;
-  let localFrame = Math.floor(clipElapsed * FACE_CLIP_FPS);
-  if (localFrame < 0) localFrame = 0;
-  if (localFrame >= FACE_CLIP_LEN) localFrame = FACE_CLIP_LEN - 1;
-  let imageIdx = FACE_CLIP_START + localFrame;
 
-  for (let i = 0; i < FACE_BUFFER_AHEAD && imageIdx+i <= FACE_CLIP_END; i++) {
-    let idx = imageIdx + i;
-    if (!faceFrames[idx]) {
-      faceFrames[idx] = loadImage("face/" + idx + ".jpg");
+function drawloadFaceLayerImages(seconds) {
+
+  //function to load the images of the face animation
+  //modified from qodo code to help load images in batches to save processing power- my previous code of loading all images at once was too laggy
+
+  // let framePeriod = 1.0 / 12;
+  let clipTime = seconds - introVocal1Start; // how much time has passed since beginning of this new animation section
+  if (clipTime < 0) clipTime = 0; // sets the start of section to always be 0 to make line up
+  
+  let currentFrame = floor(clipTime * 12); //removes floating numbers when dividing by 12 
+  if (currentFrame < 0) currentFrame = 0; //sets beginning frame to always be zero so it syncs up everytime
+  
+  if (currentFrame >= introVocal1TotalFrames) currentFrame = introVocal1TotalFrames - 1;
+  let currentImageNumber = introVocal1FrameBeg + currentFrame; //calculates the framenumber of the starting frame eg.20 + the current frame from object eg 15. so that it always line ups with the correct time when loading below
+
+  for (let x = 0; x < ImageLoadAmount && currentImageNumber+x <= introVocal1FrameEnd; x++) { //for loop to load images in a way that doesn't require images to be loading individually
+    
+    let FrameNum = currentImageNumber + x; //how it loads images ahead by taking current frame and adding whatever number it is in the loop 
+   
+    if (!faceFrames[FrameNum]) { //loads image if it has not been loaded, otherwise it doesn't load it again to save memory
+      faceFrames[FrameNum] = loadImage("face/" + FrameNum + ".jpg");
     }
   }
-  let img = faceFrames[imageIdx];
-  if (img && img.width > 0) {
+  
+  let img = faceFrames[currentImageNumber]; // setting up variable to image below to make cleaner
+ 
+  if (img && img.width > 0) { // if statement to load image if image frame is greater than 0 and the size is bigger than 0
     image(img, 0, 0, width, height);
   }
 }
 
 function draw_one_frame(words, vocal, drum, bass, other, counter) {
-  if (!bgimg) {
-    bgimg = loadImage("face/bgimage.jpg");
-    background(0,0,255);
-  } else if (bgimg.width > 0) {
+  
+  //loading bgimage that remains there for whole song
+  if (!bgimg) { //if don't have bg img loaded, do load it, if it is loaded, don't load it again
+    bgimg = loadImage("face/bgimage.jpg"); //loading the background image
+    
+} else if (bgimg.width > 0) { // load image if image is wider than 0, essentially telling it to image it if it has been loaded
     image(bgimg, 0, 0, width, height);
-  } else {
+  } 
+  
+  else { //background colour if frame has not been loaded or glitches out
     background(0,0,255);
   }
-  angleMode(DEGREES);
+ 
+  angleMode(DEGREES); 
 
-  let seconds = counter/60;
+  let seconds = counter/60; //seconds variable to make it easier to track time
 
   // if statements that control whether a moire layer is visible, what shape it is and how many moire layers
   //based on seconds which is controlled by the counter variable/60
 
   //lines
-  if (seconds < 11) { //intro
-    wavesShape = "line";
-    moireLayers = 1;
-    moireVisible = true;
-  }
-  if (seconds >= 11 && seconds < 12) { //double moire layer at 11s
-    wavesShape = "line";
-    moireLayers = 2;
-    moireVisible = true;
-  }
-  if (seconds >= 12 && seconds < 87) { //rest of intro/body leadup
+
+  if (seconds >= 0 && seconds < 87) { // intro/ buildup
     wavesShape = "line";
     moireLayers = 1;
     moireVisible = true;
@@ -116,26 +123,20 @@ function draw_one_frame(words, vocal, drum, bass, other, counter) {
   }
   
   //rectangles
-  if (seconds >= 135 && seconds < 154) { //3rd 16
+  if (seconds >= 135 && seconds < 155.5) {// third 16
     wavesShape = "rect";
     moireLayers = 1;
     moireVisible = true;
   }
-  if (seconds >= 154 && seconds < 155.5) { //puase before 4th 16
-    wavesShape = "rect";   
-    moireLayers = 1;
-    moireVisible = true;
-  }
-  if (seconds >= 155.5 && seconds < 157) { //4th 16
+  
+  if (seconds >= 155.5 && seconds < 157) { //pause before 4th 16
     moireVisible = false;
   }
-  if (seconds >= 157) { //rest of song-needs to be updated and worked on as I go
+  if (seconds >= 157) { //4th 16 and rest of song-needs to be updated and worked on as I go
     wavesShape = "rect";   
     moireLayers = 2;
     moireVisible = true;
   }
-
-  blueMoireLayerCenter = (counter * 0.1) % 360;
 
   if (counter > 0) { //making it so that the animation only happens when the song is playing
 
@@ -143,9 +144,9 @@ function draw_one_frame(words, vocal, drum, bass, other, counter) {
     let blue = color(0,0,255);
     let grey = color(120);
 
-    // Only play facelayer inside clip times
-    if(seconds >= FACE_CLIP_SECONDS_START && seconds < FACE_CLIP_SECONDS_END){
-      drawFaceClipSynced(seconds);
+    // Only play loadFaceLayerImages inside clip times
+    if(seconds >= introVocal1Start && seconds < introVocal1End){
+      drawloadFaceLayerImages(seconds);
     }
 
     blendMode(BURN); // this sets the overlay below to blend with the face layer in a high contrast way
@@ -240,27 +241,31 @@ function MoireModulators() {
 }
 
 
-function loadFaceImages() {
-  for (let x = 1; x <= faceImageAmount; x++) {
-    faceFrames[x] = loadImage("face/" + x + ".jpg");
-  }
-firstRun = false;
-}
+// function loadFaceImages() {
+//   for (let x = 1; x <= faceImageAmount; x++) {
+//     faceFrames[x] = loadImage("face/" + x + ".jpg");
+//   }
+// firstRun = false;
+// }
 
-function faceLayer(vocal,counter) {
-  if (firstRun) {
-    loadFaceImages();
-    let numLoaded = Object.keys(faceFrames).length;
-    if (numLoaded < faceImageAmount) return;
+function loadFaceLayerImages(vocal,counter) {
+  
+  if (firstRun) { //only run code if first run is active, how to load once instead of every loop
+    for (let x = 1; x <= faceImageAmount; x++) {
+      faceFrames[x] = loadImage("face/" + x + ".jpg");
+    }
+  firstRun = false; //ending that code so it only runs once
   }
-  let frameIdx = (currentImage+1);
-  if (faceFrames[frameIdx] && faceFrames[frameIdx].width > 0) {
-    image(faceFrames[frameIdx], 0, 0, width, height);
+    let numLoaded = Object.keys(faceFrames).length; //how many images have been loaded
+    if (numLoaded < faceImageAmount) return; // if image loaded is less than total images continue
   }
-  if (frameCount % 3 === 0) {
-    currentImage = (currentImage + 1) % faceImageAmount;
+  let frameFrameNum = (currentImage+1); //variable to clean up below
+
+  if (faceFrames[frameFrameNum] && faceFrames[frameFrameNum].width > 0) { // saying only run if image is loaded, by using its image number and width to tell if it exists
+    image(faceFrames[frameFrameNum], 0, 0, width, height); //imaging it 
   }
-}
+
+
 
 function waves(x, y, moireColour, layerSelect) {
   let noiseX = textureNoiseCounter + x / waveScale;

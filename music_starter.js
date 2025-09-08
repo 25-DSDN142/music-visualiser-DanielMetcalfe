@@ -48,7 +48,7 @@ let faceSections = [
   {name: 'body18', frameBeg: 3689, frameEnd: 3705, start: 307.018, end: 308.042},
   
   // Breakdown sections, timing for breakdown
-  {name: 'breakdown1', frameBeg: 2112, frameEnd: 2406, start: 175.055, end: 200.028},
+  {name: 'breakdown1', frameBeg: 2112, frameEnd: 2406, start: 175.55, end: 200.028},
   {name: 'breakdown2', frameBeg: 2629, frameEnd: 2645, start: 218.057, end: 220.021},
   {name: 'breakdown3', frameBeg: 2699, frameEnd: 2712, start: 224.049, end: 225.058}
 ];
@@ -219,6 +219,8 @@ function draw_one_frame(words, vocal, drum, bass, other, counter) {
   // if statements that control whether a moire layer is visible, what shape it is and how many moire layers
   // based on seconds which is controlled by the counter variable/60
 
+
+  //intro
   //lines
   if (seconds >= 0 && seconds < 87) { //intro pattern, 1 layer of line patterns that grow in intensity over time to body 1
     wavesShape = "line";
@@ -228,6 +230,8 @@ function draw_one_frame(words, vocal, drum, bass, other, counter) {
   if (seconds >= 86 && seconds < 88) {  //pause before body 1, synced to what is happening in the song
     moireVisible = false;
   }
+
+  //first body section
   if (seconds >= 88 && seconds < 109.5) { //body 1, 1 layer of line patterns
     wavesShape = "line";
     moireLayers = 1;
@@ -256,11 +260,66 @@ function draw_one_frame(words, vocal, drum, bass, other, counter) {
     moireVisible = false;
   }
  
-  if (seconds >= 157 && seconds < 331) {//4th body, 2 layers of rectangles
+  if (seconds >= 157 && seconds < 175) {//4th body, 2 layers of rectangles
     wavesShape = "rect";   
     moireLayers = 2; //two rectangular layers of patterns
     moireVisible = true;
+  
   }
+ 
+ 
+//breakdown
+  if (seconds >= 175 && seconds < 175.5) { //pause before breakdown, synced to the music/drums
+    moireVisible = false;
+  }
+
+  if (seconds >= 175.5 && seconds < 220) {//breakdown , 1 layers of rectangles
+    wavesShape = "rect";   
+    moireLayers = 1; //two rectangular layers of patterns
+    moireVisible = true;
+  }
+  if (seconds >= 220 && seconds < 223) { //pause before body 5, synced to the music/drums
+    moireVisible = false;
+  }
+ 
+
+  if (seconds >= 223 && seconds < 244) {//body 5, 1 layers of ellipses
+    wavesShape = "ellipse";   
+    moireLayers = 1; //two layers of patterns
+    moireVisible = true;
+  }
+
+  if (seconds >= 244 && seconds < 245) {  //pause before body 6, synced to the music/drums
+    moireVisible = false;
+  }
+
+  //second body section
+  if (seconds >= 245 && seconds < 263.5) {//6th body, 2 layers of ellipses
+    wavesShape = "ellipse";   
+    moireLayers = 2; //two layers of patterns
+    moireVisible = true;
+  }
+  
+
+  if (seconds >= 263.5 && seconds < 264) { //pause before body 7, synced to music/drums
+    moireVisible = false;
+  }
+
+  if (seconds >= 264.5 && seconds < 286.5) { //body 7, 1 layer of line patterns
+    wavesShape = "line";
+    moireLayers = 2;
+    moireVisible = true;
+  }
+  if (seconds >= 286.5 && seconds < 287) { //pause before body 8, synced to music/drums
+    moireVisible = false;
+  }
+  if (seconds >= 287 && seconds < 331) {//body 8, two layers of line patterns
+    wavesShape = "line";
+    moireLayers = 1;
+    moireVisible = true;
+  }
+
+
 
   if (counter > 0) { // saying to only run if the song is playing
     
@@ -270,30 +329,30 @@ function draw_one_frame(words, vocal, drum, bass, other, counter) {
     if (moireVisible) { // this is what plays if the pattern is not paused
       if (moireLayers === 1) { // play this if there if the parameter moire layers = 1.
         push();
-        Moire(seconds, pink, 'pink', counter); //one layer of moire patterns that are pink
+        Moire(seconds, pink, 'pink', counter,drum,bass,other); //one layer of moire patterns that are pink
         pop();
       } 
       else if (moireLayers === 2) {// this is saying add the blue moire pattern ontop of the pink layer if moire layers is set to 2
         push();
-        Moire(seconds, pink, 'pink', counter); // original pink moire layer named pink
+        Moire(seconds, pink, 'pink', counter,drum,bass,other); // original pink moire layer named pink
         pop();
 
         push();
-        Moire(seconds, blue, 'blue', counter); //additional blue layer in sections 2 moire layers are called
+        Moire(seconds, blue, 'blue', counter,drum,bass,other); //additional blue layer in sections 2 moire layers are called
         pop();
       }
     } 
     
     else { // this is to keep the moire pattern going even when not visible on the sketch for the pause sections. This means that there is no weird timing issues or it starting over from the beginning everytime
       
-      MoireModulators(); // seperate function to make the code more legible when it is repeated three times below
+      MoireModulators(seconds, drum, bass, other); // seperate function to make the code more legible when it is repeated three times below
       //this makes sure the pattern still continues when not visible
       if (moireLayers === 2) { // if statement for if there are two moire layers playing in the sketch. means both layers will continue playing behind the scenes
-        MoireModulators(); //since there are two layers, the modulators needs to be called twice.
-        MoireModulators();
+        MoireModulators(seconds, drum, bass, other); //since there are two layers, the modulators needs to be called twice.
+        MoireModulators(seconds, drum, bass, other);
       } 
       else { //if there is just one layer, call it just once. 
-        MoireModulators();
+        MoireModulators(seconds, drum, bass, other);
       }
     }
 
@@ -314,18 +373,40 @@ function draw_one_frame(words, vocal, drum, bass, other, counter) {
   }
 }
 
-function Moire(seconds, moireColour, layerSelect, counter) {
+function Moire(seconds, moireColour, layerSelect, counter,bass,drum,other) {
   //function that generates how the patterns will act, eg if they will rotate etc
   pink = color(237, 25, 104); //pattern colours
   blue = color(0, 0, 255);
 
-  let lineSpace = map(seconds,0,88,100,15);// how the speed and spacing of the pattern is mapped to the pace of the song and build up in the intro. it starts of sparse and slower and then increases in intensity as it gets to the body of the song
-  lineSpace = max(lineSpace,15); //setting a limit of how close together the lines of the pattern can get, for both legibility and performance
+  let lineSpace;//the distance between lines or rectangles etc.
+  
+  
+  if (seconds >= 0 && seconds <= 88) { // intro pattern build up
+    lineSpace = map(seconds,0,88,100,15);// how the speed and spacing of the pattern is mapped to the pace of the song and build up in the intro. it starts of sparse and slower and then increases in intensity as it gets to the body of the song
+    lineSpace = max(lineSpace,15); //setting a limit of how close together the lines of the pattern can get, for both legibility and performance
+  }
+ 
+  else if (seconds >= 175 && seconds <= 223) {//breakdown build up effect
+    lineSpace = map(seconds,175,223,200,15);// how the speed and spacing of the pattern is mapped to the pace of the song and build up in the intro. it starts of sparse and slower and then increases in intensity as it gets to the body of the song
+    lineSpace = max(lineSpace,15); //setting a limit of how close together the lines of the pattern can get, for both legibility and performance
+  }
+  else if (seconds >= 223 && seconds <= 309) {//second body
+    lineSpace = 15; //setting a limit of how close together the lines of the pattern can get, for both legibility and performance
+  }
+
+  
+  else if (seconds >= 309 && seconds <= 331) {//end slow down effect
+    lineSpace = map(seconds,309,331,15,100);// how the speed and spacing of the pattern is mapped to the pace of the song and build up in the intro. it starts of sparse and slower and then increases in intensity as it gets to the body of the song
+    lineSpace = max(lineSpace,15); //setting a limit of how close together the lines of the pattern can get, for both legibility and performance
+  }
+ 
+  else {
+    lineSpace = 15; // making the line space of 15 the distance for every other section,eg the body sections
+  }
 
   push();//own system for translating and rotating around itself
 
   translate(width/2, height/2);//centering the pattern 
-
   scale(4);// scaling it make it cover the whole sketch so there were no weird gaps
   
   if (layerSelect === "blue" && moireLayers === 2) {// adding in rotatation to the blue layer to give more dynamism to the scene
@@ -333,7 +414,7 @@ function Moire(seconds, moireColour, layerSelect, counter) {
   } else {
     rotate(angleCounter); // essentially no rotation if just one layer.
   }
-  MoireModulators(); // function that has the noise modulators in it to keep the code cleaner. 
+  MoireModulators(seconds, drum, bass, other); // function that has the noise modulators in it to keep the code cleaner. 
 
   let maxRadius = 380; // sets the total amount of lines and the distane it is , basically the maximum distance a line can be placed
 
@@ -346,41 +427,93 @@ function Moire(seconds, moireColour, layerSelect, counter) {
   pop();
 }
 
-function MoireModulators() { 
+function MoireModulators(seconds,drum,bass,other) { 
   //modulators that influence how much the noise impact the pattern generation
   //put into its own function for cleaner code, since it is called away multiple times for different layers and timing
+ 
+  if (seconds > 223) { //changing the pattern subtly for the second half of song for greater variation that remains consistant with first half
+    
+    //subtle mapping since the noise modulators are really sensitive and it can look bad really fast if the value is too high
+    let drumsAmount2= map(drum,0,100,0.0001,0.001); //mapping the drums to modify the noise pattern in a subtle way so it doesn't turn it into random noise
+    let bassAmount2= map(bass,0,100,0.00005,0.0001); //mapping bass to noise
+    let otherAmount2= map(other,0,100,0.0025,0.01);; //mapping other to noise
+   
+    angleCounter += 0.003 + bassAmount2; //this sets the angle/axis that the pattern is generated at
+    textureNoiseCounter += 0.01 +otherAmount2; // how much noise is added, adjusting this increases the amount of noise impact on the pattern
+    strokeWeightNoiseCounter += 0.03+drumsAmount2; 
   
-  angleCounter += 0.003; //this sets the angle/axis that the pattern is generated at
-  textureNoiseCounter += 0.01; // how much noise is added, adjusting this increases the amount of noise impact on the pattern
-  strokeWeightNoiseCounter += 0.03; //an additional variable to add greater variation in noise
+  }
+
+  else if  (seconds >= 88 && seconds < 175) { //first body
+    //subtle mapping since the noise modulators are really sensitive and it can look bad really fast if the value is too high
+    let drumsAmount1= map(drum,0,100,0.000005,0.00005); //mapping the drums to modify the noise pattern in a subtle way so it doesn't turn it into random noise
+    let bassAmount1= map(bass,0,100,0.00005,0.0001); //mapping bass to noise
+    let otherAmount1= map(other,0,100,0.0025,0.01); //mapping other to noise
+    
+    angleCounter += 0.003 + bassAmount1; //this sets the angle/axis that the pattern is generated at
+    textureNoiseCounter += 0.01 +otherAmount1; // how much noise is added, adjusting this increases the amount of noise impact on the pattern
+    strokeWeightNoiseCounter += 0.03+drumsAmount1; 
+  
+ }
+
+ else { //intro, making the movement smoother by removing the maps in the intro to get atmospheric feel
+  
+  angleCounter += 0.003 ; //this sets the angle/axis that the pattern is generated at
+  textureNoiseCounter += 0.01 ; // how much noise is added, adjusting this increases the amount of noise impact on the pattern
+  strokeWeightNoiseCounter += 0.03; 
+
+
+ }
 }
 
 function waves(x, y, moireColour) {
-//function to clean up the moire function code
-//this is the thing that is creating the waves/patterns, it is using noise to modulate the x and y positions and size of the particle shape, eg line or rect.
+  //function to clean up the moire function code
+  //this is the thing that is creating the waves/patterns, it is using noise to modulate the x and y positions and size of the particle shape, eg line or rect.
+    
+  let noiseX = textureNoiseCounter + x / waveScale; // how much the noise modulators effect the x axis
+    let noiseY = textureNoiseCounter + y / waveScale; //how much they effect the y axis
   
-let noiseX = textureNoiseCounter + x / waveScale; // how much the noise modulators effect the x axis
-  let noiseY = textureNoiseCounter + y / waveScale; //how much they effect the y axis
-
-  let offset = map(noise(noiseX, noiseY), 0, 1, -wavesOffamount, wavesOffamount);//using map to control the amount the noise can offset the patterns to a legible range. if this is not done, it just becomes a too random if at small numbers, and it is not visible at large numbers. This range makes it visible at all times
-  let field = map(noise(x, y), 0, 1, noiseMap1, noiseMap2); // an additional map, to control the distance of the noise again
-
-  strokeWeight(1);// setting the line weight
+    let offset = map(noise(noiseX, noiseY), 0, 1, -wavesOffamount, wavesOffamount);//using map to control the amount the noise can offset the patterns to a legible range. if this is not done, it just becomes a too random if at small numbers, and it is not visible at large numbers. This range makes it visible at all times
+    let field = map(noise(x, y), 0, 1, noiseMap1, noiseMap2); // an additional map, to control the distance of the noise again
   
-  if (field < offset) offset = field; // setting the offset to switch to the second modulator if it goes below the field amount, this just adds more variation and modulation
-
-  if (wavesShape === "line") { //if 
-    stroke(moireColour);// moire Colour allows one line of code to select between pink or blue instead of having to do if statements
-    noFill();
-    line(x + offset, y + offset, x + offset * 2, y + offset * 2);// offsetting the line coordinates using the offse, which is controlled by the noise, this creates the pattern 
-  } 
+    strokeWeight(1);// setting the line weight
+    
+    if (field < offset) offset = field; // setting the offset to switch to the second modulator if it goes below the field amount, this just adds more variation and modulation
   
-  else if (wavesShape === "rect") { //if the waveshape seletor is rectangles do this
-     
-    stroke(0); //black stroke to make the squares visible when close together or overlayed
-    fill(moireColour); // Use moireColour as way to s
-      
+    if (wavesShape === "line") { //if 
+      stroke(moireColour);// moire Colour allows one line of code to select between pink or blue instead of having to do if statements
+      noFill();
+      line(x + offset, y + offset, x + offset * 2, y + offset * 2);// offsetting the line coordinates using the offse, which is controlled by the noise, this creates the pattern 
+    } 
+    
+    else if (wavesShape === "rect") { //if the waveshape seletor is rectangles do this
+      stroke(0); //black stroke to make the squares visible when close together or overlayed
+      fill(moireColour); // Use moireColour as way to s
       rectMode(CENTER);
-    rect(x + offset, y + offset, offset * 2, offset * 2);//offset is the noise modualation, controlling the position and size of the object to create the pattern
+      rect(x + offset, y + offset, offset * 2, offset * 2);//offset is the noise modualation, controlling the position and size of the object to create the pattern
+    }
+    
+   
+     else if (wavesShape === "ellipse") { //if the waveshape selector is ellipses do this
+      stroke(0); //black stroke to make the ellipses visible when close together or overlayed
+      fill(moireColour); // Use moireColour to fill the ellipses
+      ellipseMode(CENTER);
+      ellipse(x + offset, y + offset, (offset * 2), (offset * 2));//offset is the noise modualation, controlling the position and size of the ellipse to create the pattern, using abs to avoid negative sizes
+    }
   }
-}
+
+
+
+// noise generator
+//   let tileW = width / tilesX;
+//   let tileH = height / tilesY;
+
+//   for (let x = 0; x < tilesX; x++) {
+//     for (let y = 0; y < tilesY; y++) {
+//       fill(random(0,40),60);
+//       noStroke();
+//       rect(x * tileW, y * tileH, tileW, tileH);
+//     }
+// //   }
+// // }
+// // }

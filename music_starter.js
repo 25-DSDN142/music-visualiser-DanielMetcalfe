@@ -29,6 +29,16 @@ let faceSections = [
   
   // Body sections, timing for body
   {name: 'body1', frameBeg: 1184, frameEnd: 1206, start: 98.034, end: 100.028},
+  
+  {name: 'intro1', frameBeg: 259, frameEnd: 558, start: 21.36, end: 46.26},
+  {name: 'intro2', frameBeg: 650, frameEnd: 698, start: 54.15, end: 58.09},
+  {name: 'intro3', frameBeg: 796, frameEnd: 823, start: 66.0, end: 68.03},
+  {name: 'intro4', frameBeg: 855, frameEnd: 878, start: 71.009, end: 73.007},
+  {name: 'intro5', frameBeg: 929, frameEnd: 957, start: 77.019, end: 79.041},
+  {name: 'intro6', frameBeg: 1044, frameEnd: 1060, start: 86.053, end: 88.017},
+ 
+  //body secton vocal timing
+  {name: 'body1', frameBeg: 1184, frameEnd: 1206, start: 98.034, end: 100.028},
   {name: 'body2', frameBeg: 1233, frameEnd: 1256, start: 102.039, end: 104.037},
   {name: 'body3', frameBeg: 1309, frameEnd: 1325, start: 109.000, end: 110.024},
   {name: 'body4', frameBeg: 1378, frameEnd: 1473, start: 114.041, end: 122.042},
@@ -67,8 +77,8 @@ let lineAmountY = 200;
 let textureNoiseCounter = 2;
 let strokeWeightNoiseCounter = 2;
 let angleCounter = 20;
-let noiseMap1 = -5;
-let noiseMap2 = 100;
+let noiseMap1 = -5; //-5
+let noiseMap2 = 100;//100
 let waveScale = 200;
 let wavesOffamount = 40;
 
@@ -326,6 +336,18 @@ function draw_one_frame(words, vocal, drum, bass, other, counter) {
     let pink = color(255, 25, 104); //pattern colours
     let blue = color(0,0,255);
 
+    if (drum <40){  //mapping the drum channel to the pink colour to get desaturated effect in a more controlled way than lerpColor, I did not like the inbetween colours lerp cor created so wanted to do it in a more on/off switch way to toggle between two colours
+     //this gives more change over the intro and breakdown and adds to the build up as the pink comes in more and more as the drums get louder towards body
+      pink = color(120); //grey
+    }
+
+    if (drum <50){  //mapping the drum channel to the blue colour to get desaturated glitchy effect in a more controlled way than lerpColor
+    //this adds in a subtle glitch effect in the body sections
+      blue = color(120); //grey
+    }
+
+  
+
     if (moireVisible) { // this is what plays if the pattern is not paused
       if (moireLayers === 1) { // play this if there if the parameter moire layers = 1.
         push();
@@ -371,12 +393,19 @@ function draw_one_frame(words, vocal, drum, bass, other, counter) {
       }
     }
   }
+
 }
 
 function Moire(seconds, moireColour, layerSelect, counter,bass,drum,other) {
   //function that generates how the patterns will act, eg if they will rotate etc
+ 
+  
+ 
   pink = color(237, 25, 104); //pattern colours
   blue = color(0, 0, 255);
+
+  // let drumBlend = map(drum, 40, 100, 0, 1); //mapping the volume of the vocal to responsively blend between blue and grey giving a glichy desaturation effect
+  // pink = lerpColor(color(120), color(237, 25, 104), drumBlend);
 
   let lineSpace;//the distance between lines or rectangles etc.
   
@@ -431,14 +460,21 @@ function MoireModulators(seconds,drum,bass,other) {
   //modulators that influence how much the noise impact the pattern generation
   //put into its own function for cleaner code, since it is called away multiple times for different layers and timing
  
+  if (seconds >= 223) {
+    noiseMap1 = 8;  
+    noiseMap2 = 80;
+  }
+  
   if (seconds > 223) { //changing the pattern subtly for the second half of song for greater variation that remains consistant with first half
     
     //subtle mapping since the noise modulators are really sensitive and it can look bad really fast if the value is too high
+    //main control of the pattern is tied to the bass since that is focal point of the body sections, this gives the pattern that flowy rolling feeling of the reese bass
+
     let drumsAmount2= map(drum,0,100,0.0001,0.001); //mapping the drums to modify the noise pattern in a subtle way so it doesn't turn it into random noise
-    let bassAmount2= map(bass,0,100,0.00005,0.0001); //mapping bass to noise
+    let bassAmount2= map(bass,0,100,0.00005,0.01); //mapping bass to noise
     let otherAmount2= map(other,0,100,0.0025,0.01);; //mapping other to noise
    
-    angleCounter += 0.003 + bassAmount2; //this sets the angle/axis that the pattern is generated at
+    angleCounter += -0.005 - bassAmount2; //this sets the angle/axis that the pattern is generated at
     textureNoiseCounter += 0.01 +otherAmount2; // how much noise is added, adjusting this increases the amount of noise impact on the pattern
     strokeWeightNoiseCounter += 0.03+drumsAmount2; 
   
@@ -446,8 +482,10 @@ function MoireModulators(seconds,drum,bass,other) {
 
   else if  (seconds >= 88 && seconds < 175) { //first body
     //subtle mapping since the noise modulators are really sensitive and it can look bad really fast if the value is too high
-    let drumsAmount1= map(drum,0,100,0.000005,0.00005); //mapping the drums to modify the noise pattern in a subtle way so it doesn't turn it into random noise
-    let bassAmount1= map(bass,0,100,0.00005,0.0001); //mapping bass to noise
+   //main control of the pattern is tied to the bass since that is focal point of the body sections, giving the pattern the flowy rolling feeling of the reese bass
+   //but the drums and other are also mapped for subtle variation
+   let drumsAmount1= map(drum,0,100,0.000005,0.0005); //mapping the drums to modify the noise pattern in a subtle way so it doesn't turn it into random noise
+    let bassAmount1= map(bass,0,100,0.00005,0.01); //mapping bass to noise
     let otherAmount1= map(other,0,100,0.0025,0.01); //mapping other to noise
     
     angleCounter += 0.003 + bassAmount1; //this sets the angle/axis that the pattern is generated at
@@ -456,11 +494,13 @@ function MoireModulators(seconds,drum,bass,other) {
   
  }
 
- else { //intro, making the movement smoother by removing the maps in the intro to get atmospheric feel
-  
-  angleCounter += 0.003 ; //this sets the angle/axis that the pattern is generated at
-  textureNoiseCounter += 0.01 ; // how much noise is added, adjusting this increases the amount of noise impact on the pattern
-  strokeWeightNoiseCounter += 0.03; 
+ else { //intro and breakdown , mapping the other channel to get an atmospheric and glitchy feel
+ //everything is mapped to the other channel since that is the main focal point of the intro alongside the vocals
+ 
+  let otherAmount3= map(other,0,100,0.000005,0.01);
+  angleCounter += 0.003 +otherAmount3 ; //this sets the angle/axis that the pattern is generated at
+  textureNoiseCounter += 0.01 +otherAmount3  ; // how much noise is added, adjusting this increases the amount of noise impact on the pattern
+  strokeWeightNoiseCounter += 0.03 +otherAmount3 ; 
 
 
  }

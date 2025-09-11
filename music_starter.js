@@ -3,6 +3,7 @@ let bgimg;
 let faceFrames = {};
 let faceImageAmount = 3705;
 let currentImage = 0;
+let noiseImg;
 
 // Images in memory paramaters
 let allfaceSectionsComplete = false;
@@ -35,7 +36,7 @@ let faceSections = [
   {name: 'intro3', frameBeg: 796, frameEnd: 823, start: 66.0, end: 68.03},
   {name: 'intro4', frameBeg: 855, frameEnd: 878, start: 71.009, end: 73.007},
   {name: 'intro5', frameBeg: 929, frameEnd: 957, start: 77.019, end: 79.041},
-  {name: 'intro6', frameBeg: 1044, frameEnd: 1060, start: 86.053, end: 88.017},
+  {name: 'intro6', frameBeg: 1044, frameEnd: 1071, start: 86.053, end: 88.017},
  
   //body secton vocal timing
   {name: 'body1', frameBeg: 1184, frameEnd: 1206, start: 98.034, end: 100.028},
@@ -336,6 +337,9 @@ function draw_one_frame(words, vocal, drum, bass, other, counter) {
     let pink = color(255, 25, 104); //pattern colours
     let blue = color(0,0,255);
 
+    
+    //using the drum channel to add in desaturated glitches to the pattern
+
     if (drum <40){  //mapping the drum channel to the pink colour to get desaturated effect in a more controlled way than lerpColor, I did not like the inbetween colours lerp cor created so wanted to do it in a more on/off switch way to toggle between two colours
      //this gives more change over the intro and breakdown and adds to the build up as the pink comes in more and more as the drums get louder towards body
       pink = color(120); //grey
@@ -392,9 +396,12 @@ function draw_one_frame(words, vocal, drum, bass, other, counter) {
         ellipse(x * tileW, y * tileH, tileW, tileH);
       }
     }
-  }
 
+
+  
+  }
 }
+
 
 function Moire(seconds, moireColour, layerSelect, counter,bass,drum,other) {
   //function that generates how the patterns will act, eg if they will rotate etc
